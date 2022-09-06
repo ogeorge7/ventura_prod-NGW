@@ -1,0 +1,123 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: This template creates a NatGateway in each public subnet
+  
+
+Parameters:
+  ExportVpcStackName:
+    Description: The name of the vpc stack that exports values
+    Type: String
+
+Resources:
+  NatGateway1EIP:
+    Type: AWS::EC2::EIP
+    Properties: 
+      Domain: VPC
+      Tags: 
+        - Key: Name
+          Value: EIP 1
+
+  NatGateway2EIP:
+    Type: AWS::EC2::EIP
+    Properties: 
+      Domain: VPC
+      Tags: 
+        - Key: Name
+          Value: EIP 2
+
+  
+  NatGateway1:
+    Type: AWS::EC2::NatGateway
+    Properties: 
+      AllocationId: !GetAtt NatGateway1EIP.AllocationId
+      SubnetId:
+        Fn::ImportValue: !Sub ${ExportVpcStackName}-NatALBSubnet
+      Tags: 
+        - Key: Name
+          Value: NatGateway Public Subnet 1
+
+  NatGateway2:
+    Type: AWS::EC2::NatGateway
+    Properties: 
+      AllocationId: !GetAtt NatGateway2EIP.AllocationId
+      SubnetId:
+        Fn::ImportValue: !Sub ${ExportVpcStackName}-ALBSubnet
+      Tags: 
+        - Key: Name
+          Value: NatGateway Public Subnet 2
+
+  PrivateRouteTable1:
+      Type: AWS::EC2::RouteTable
+      Properties: 
+        Tags: 
+          - Key: Name
+            Value: Private Route Table 1
+        VpcId:
+          Fn::ImportValue: !Sub ${ExportVpcStackName}-VPC
+
+  PrivateRoute1:
+      Type: AWS::EC2::Route
+      Properties: 
+        DestinationCidrBlock: 0.0.0.0/0
+        NatGatewayId: !Ref NatGateway1
+        RouteTableId: !Ref PrivateRouteTable1
+
+  WeBSubnet1RouteTableAssociation:
+      Type: AWS::EC2::SubnetRouteTableAssociation
+      Properties: 
+        RouteTableId: !Ref PrivateRouteTable1
+        SubnetId:
+          Fn::ImportValue: !Sub ${ExportVpcStackName}-WebSubnet1
+
+  AppSubnet1RouteTableAssociation:
+      Type: AWS::EC2::SubnetRouteTableAssociation
+      Properties: 
+        RouteTableId: !Ref PrivateRouteTable1
+        SubnetId:
+          Fn::ImportValue: !Sub ${ExportVpcStackName}-AppSubnet1
+
+  DBSubnet1RouteTableAssociation:
+      Type: AWS::EC2::SubnetRouteTableAssociation
+      Properties: 
+        RouteTableId: !Ref PrivateRouteTable1
+        SubnetId:
+          Fn::ImportValue: !Sub ${ExportVpcStackName}-DBSubnet1
+
+  PrivateRouteTable2:
+      Type: AWS::EC2::RouteTable
+      Properties: 
+        Tags: 
+          - Key: Name
+            Value: Private Route Table 2
+        VpcId:
+          Fn::ImportValue: !Sub ${ExportVpcStackName}-VPC
+
+  PrivateRoute2:
+      Type: AWS::EC2::Route
+      Properties: 
+        DestinationCidrBlock: 0.0.0.0/0
+        NatGatewayId: !Ref NatGateway2
+        RouteTableId: !Ref PrivateRouteTable2
+
+  WeBSubnet2RouteTableAssociation:
+      Type: AWS::EC2::SubnetRouteTableAssociation
+      Properties: 
+        RouteTableId: !Ref PrivateRouteTable2
+        SubnetId:
+          Fn::ImportValue: !Sub ${ExportVpcStackName}-WebSubnet2
+
+  AppSubnet2RouteTableAssociation:
+      Type: AWS::EC2::SubnetRouteTableAssociation
+      Properties: 
+        RouteTableId: !Ref PrivateRouteTable2
+        SubnetId:
+          Fn::ImportValue: !Sub ${ExportVpcStackName}-AppSubnet2
+
+  DBSubnet2RouteTableAssociation:
+      Type: AWS::EC2::SubnetRouteTableAssociation
+      Properties: 
+        RouteTableId: !Ref PrivateRouteTable2
+        SubnetId:
+          Fn::ImportValue: !Sub ${ExportVpcStackName}-DBSubnet2
+      
+
